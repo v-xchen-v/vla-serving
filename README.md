@@ -1,28 +1,60 @@
 # VLA Serving
 
-A lightweight serving framework for Vision-Language-Action (VLA) models.
+A lightweight, production-ready serving framework for Vision-Language-Action (VLA) models that simplifies the deployment of robotics AI models.
 
-## Installation
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## 🌟 Features
+
+- **🚀 Easy Integration**: Simple API to serve any VLA model
+- **🔧 Flexible Configuration**: YAML-based configuration system
+- **📡 RESTful API**: Standard HTTP endpoints for inference
+- **🛠 Client SDK**: Python SDK for seamless integration
+- **📊 Extensible**: Plugin architecture for custom models
+
+## 📦 Installation
+
+### From Source
 ```bash
 git clone https://github.com/v-xchen-v/vla-serving.git
 cd vla-serving
 pip install -e .
 ```
 
-## Examples
+### Using pip (coming soon)
+```bash
+pip install vla-serving
+```
 
-### Quick Start with Dummy Service
+## 🚀 Quick Start
 
 The easiest way to get started is with the included dummy service that demonstrates the basic API:
 
-#### 1. Start the server by CLI
+### Option 1: Command Line Interface
+
+Start the server with the included dummy service for testing:
+
 ```bash
-cd path-to-vla_serving
 # Start the dummy service server
-python -m vla_serving.server --config examples.yaml --port 555
+python -m vla_serving.server --config examples/dummy.yaml --port 5555
 ```
 
-#### 2. Test with curl
+### Option 2: Python API
+
+```python
+from vla_serving.server import app, init_service
+
+# Initialize service with config
+init_service("examples/dummy.yaml")
+
+# Start server
+app.run(host="0.0.0.0", port=5555, debug=False)
+```
+
+### Testing Your Setup
+
+#### Using cURL
 ```bash
 # Create test data
 echo '{"task_description": "pick up the red cube", "state": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]}' > query.json
@@ -36,41 +68,17 @@ curl -X POST http://localhost:5555/inference \
   -F "json=@query.json"
 ```
 
-
-#### 3. Expected Response
-```json
-{
-  "action": [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75],
-  "metadata": {
-    "model_name": "DummyService",
-    "num_images": 1,
-    "task_description": "pick up the red cube"
-  }
-}
-```
-#### 4. Use minimal code to start server via vla_serving library
-
+#### Using Python SDK
 ```python
-from vla_serving.server import app, init_service
-
-# Initialize service with config
-init_service("examples/dummy_service_config.yaml")
-
-# Start server
-app.run(host="0.0.0.0", port=5555, debug=False)
-```
-
-#### 5. Use minimal code to run inference via vla_serving client SDK
-
-```python
+import numpy as np
 from vla_serving.sdk import VLAClient
 
 # Initialize the VLA client
 client = VLAClient(base_url="http://localhost:5555")
 
-# Create dummy images and robot state
-image_list = create_dummy_images()
-task_description = "Pick up the red block and place it on the blue block."
+# Create dummy inputs
+image_list = [create_dummy_image()]  # Your image creation function
+task_description = "pick up the red cube"
 state = np.random.rand(6).astype(np.float32)  # Example 6-DOF robot state
 
 # Send inference request
@@ -83,35 +91,63 @@ response = client.infer(
 print(f"Predicted action: {response['action']}")
 ```
 
-## Usage
-### As a server
+#### Expected Response
+```json
+{
+  "action": [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75],
+  "metadata": {
+    "model_name": "DummyService",
+    "num_images": 1,
+    "task_description": "pick up the red cube"
+  }
+}
+```
+
+## 📋 Request & Response Logging
+
+The VLA server logs inference requests and responses automatically for debugging and analysis.
+
+### Quick Start
+
+**Start server with logging:**
 ```bash
-python -m vla_serving.server --config path/to/config.yaml --port 5000
+python examples/run_dummy_server.py --config config.yaml --log_folder ./logs
 ```
-### As a library
+
+**Client usage:**
 ```python
-from vla_serving import BaseModelService, build_service_from_config
+from vla_serving.sdk import VLAClient
 
-# Implement your model service
-class MyVLAService(BaseModelService):
-    @classmethod
-    def from_config(cls, cfg):
-        return cls()
-    
-    def step(self, image_list, task_description=None, state=None, **kwargs):
-        # Your inference logic here
-        return {"action": [1.0, 0.5, 0.0]}
-
-# Use the service
-config = {"backend_config": {...}}
-service = build_service_from_config(config)
+client = VLAClient("http://localhost:5555")
+response = client.infer(
+    images=image_list,
+    task_description="Pick up the red cube",
+    state=robot_state,
+    write_log=True  # Enable logging (default)
+)
 ```
 
-## Workflow when you "meet a new model"
+### What Gets Logged
+
+For each request, the following files are created with timestamp naming:
+- `YYYY-MM-DD_HH-MM-SS_task_description_*.jpg` - Input images
+- `YYYY-MM-DD_HH-MM-SS_task_description_query.json` - Input request
+- `YYYY-MM-DD_HH-MM-SS_task_description_answer.json` - Server response
+
+### Configuration
+
+**Log folder priority:**
+1. `--log_folder` argument
+2. `logging/api_logs` (default)
+
+**Control logging:**
+- SDK: Set `write_log=False` in `client.infer()` it means HTTP: Include `"write_log": false` in JSON payload
+
+## 🔧 Workflow when you "meet a new model"
 
 When you want to integrate a new VLA model to use the serving framework.
 
-### Step 1: Understand the Model Interface
+### Step 1: Understand the Model Interface (write the normal inference code)
 
 First, analyze your new model to understand:
 - **Input format**: What types of images does it expect? (RGB, depth, segmentation masks?)

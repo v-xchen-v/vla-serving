@@ -117,10 +117,11 @@ class VLAClient:
         state: Any = None,
         image_format: Optional[str] = None,
         extra_fields: Optional[Dict[str, Any]] = None,
+        write_log: bool = True,
         verbose: bool = False,
     ) -> Dict[str, Any]:
         """
-        Call /api/inferene on the server.
+        Call /api/inference on the server.
         
         images:
             Sequence of images (PIL.Image, np.ndarray, or None)
@@ -133,7 +134,9 @@ class VLAClient:
             "JPEG" or "PNG". If None, uses default_image_format.
         extra_fields:
             Additional JSON fields to send along with 'task_description' and 'state'.
-            e.g. {"use_state": False, "write_log": True}
+            e.g. {"use_state": False}
+        write_log:
+            Whether to enable server-side logging of requests and responses.
         verbose:
             If True, prints timing info.
             
@@ -149,13 +152,16 @@ class VLAClient:
         if extra_fields is None:
             extra_fields = {}
             
+        # Add write_log to extra_fields
+        extra_fields["write_log"] = write_log
+        
         # convert state to list if it's a numpy array
         state = convert_ndarray_to_list(state)    
         
         payload_json: Dict[str, Any] = {
             "task_description": task_description,
             "state": state,
-            "extra_fields": extra_fields,
+            **extra_fields,
         }
         
         t0 = time.time()

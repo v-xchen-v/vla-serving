@@ -33,7 +33,8 @@ def main():
         images=image_list,
         task_description=task_description,
         state=state,
-        image_format="JPEG"
+        image_format="JPEG",
+        write_log=True  # Enable server-side logging
     )
 
     # Print the response
