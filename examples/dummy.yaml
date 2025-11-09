@@ -1,0 +1,7 @@
+model_name: dummy
+
+backend_class: "examples.dummy_service.DummyService"
+
+backend_config:
+  scale: 2.5
+  offset: 1.0
