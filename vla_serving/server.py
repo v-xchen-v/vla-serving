@@ -50,6 +50,20 @@ def inference():
             **{k: v for k, v in query_json.items() if k not in ["task_description", "state"]},
         )
         
+        # recursively convert all numpy arrays in result to lists
+
+        def convert_ndarray(obj):
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, dict):
+                return {k: convert_ndarray(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_ndarray(i) for i in obj]
+            else:
+                return obj
+
+        result = convert_ndarray(result) # to prevent jsonify issues (Object of type ndarray is not JSON serializable)
+
         return jsonify(result)
     
     except Exception as e:
