@@ -12,19 +12,6 @@ try:
 except ImportError:
     yaml = None
     
-
-class ServingContext:
-    """
-    Holds the global model service and config for a running server.
-    """
-
-    def __init__(self, cfg: Dict[str, Any]):
-        self.cfg = cfg
-        self.service: BaseModelService = build_service_from_config(cfg)
-
-    def reset(self):
-        self.service.reset()
-    
 def load_config(config_path: str) -> Dict[str, Any]:
     """Generic YAML config dict from <file>."""
     if yaml is None:
@@ -63,3 +50,14 @@ def parse_query_json_from_request(flask_request) -> Dict[str, Any]:
         return json.load(query_file)
     except Exception as e:
         raise ValueError(f"Failed to parse json: {e}") from e
+    
+def convert_ndarray_to_list(obj):
+    # recursively convert all numpy arrays in result to lists
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {k: convert_ndarray_to_list(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_ndarray_to_list(i) for i in obj]
+    else:
+        return obj

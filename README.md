@@ -15,7 +15,7 @@ pip install -e .
 
 The easiest way to get started is with the included dummy service that demonstrates the basic API:
 
-#### 1. Start the server
+#### 1. Start the server by CLI
 ```bash
 cd path-to-vla_serving
 # Start the dummy service server
@@ -47,6 +47,40 @@ curl -X POST http://localhost:5555/inference \
     "task_description": "pick up the red cube"
   }
 }
+```
+#### 4. Use minimal code to start server via vla_serving library
+
+```python
+from vla_serving.server import app, init_service
+
+# Initialize service with config
+init_service("examples/dummy_service_config.yaml")
+
+# Start server
+app.run(host="0.0.0.0", port=5555, debug=False)
+```
+
+#### 5. Use minimal code to run inference via vla_serving client SDK
+
+```python
+from vla_serving.sdk import VLAClient
+
+# Initialize the VLA client
+client = VLAClient(base_url="http://localhost:5555")
+
+# Create dummy images and robot state
+image_list = create_dummy_images()
+task_description = "Pick up the red block and place it on the blue block."
+state = np.random.rand(6).astype(np.float32)  # Example 6-DOF robot state
+
+# Send inference request
+response = client.infer(
+    images=image_list,
+    task_description=task_description,
+    state=state
+)
+
+print(f"Predicted action: {response['action']}")
 ```
 
 ## Usage

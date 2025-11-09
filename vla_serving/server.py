@@ -11,6 +11,7 @@ from flask import Flask, request, jsonify
 from .loader import build_service_from_config
 
 from .server_core import load_config, parse_image_from_requests, parse_query_json_from_request
+from .server_core import convert_ndarray_to_list
 
 app = Flask(__name__)
 
@@ -51,18 +52,7 @@ def inference():
         )
         
         # recursively convert all numpy arrays in result to lists
-
-        def convert_ndarray(obj):
-            if isinstance(obj, np.ndarray):
-                return obj.tolist()
-            elif isinstance(obj, dict):
-                return {k: convert_ndarray(v) for k, v in obj.items()}
-            elif isinstance(obj, list):
-                return [convert_ndarray(i) for i in obj]
-            else:
-                return obj
-
-        result = convert_ndarray(result) # to prevent jsonify issues (Object of type ndarray is not JSON serializable)
+        result = convert_ndarray_to_list(result) # to prevent jsonify issues (Object of type ndarray is not JSON serializable)
 
         return jsonify(result)
     

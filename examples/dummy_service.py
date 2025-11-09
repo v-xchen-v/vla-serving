@@ -3,11 +3,15 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 from PIL import Image
 
-# cannot find module 'vla_serving'
-import os, sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from vla_serving import BaseModelService
-from vla_serving.base_service import ImageOrDepth
+try:
+    from vla_serving import BaseModelService
+    from vla_serving.base_service import ImageOrDepth
+except ImportError:
+    # Fallback for development/local imports
+    import os, sys
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from vla_serving import BaseModelService
+    from vla_serving.base_service import ImageOrDepth
 
 
 class DummyService(BaseModelService):
